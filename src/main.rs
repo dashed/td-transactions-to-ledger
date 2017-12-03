@@ -19,7 +19,7 @@ fn main() {
         .about("Convert TD Bank transactions to ledger compatible transactions")
         .arg(
             Arg::with_name("INPUT")
-                .help("Sets the input file to use")
+                .help("Sets the input CSV file to use")
                 .required(true),
         )
         .get_matches();
