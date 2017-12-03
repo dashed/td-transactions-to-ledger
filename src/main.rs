@@ -9,6 +9,21 @@ extern crate csv;
 use clap::{App, Arg};
 use chrono::NaiveDate;
 
+// types
+
+enum NumOfTransactions {
+    All,
+    Some(u64),
+}
+
+struct Transaction {
+    date: NaiveDate,
+    description: String,
+    amount: String,
+}
+
+// app
+
 fn main() {
     // cli args
 
@@ -28,10 +43,34 @@ fn main() {
                 .help("Sets account for each transaction")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("first_n")
+                .short("n")
+                .long("num")
+                .help("Only show last N transactions.")
+                .takes_value(true),
+        )
         .get_matches();
 
     let path_to_file = matches.value_of("INPUT").unwrap();
-    let account_name = matches.value_of("account_name").unwrap_or("account name here");
+
+    let account_name = matches
+        .value_of("account_name")
+        .unwrap_or("account name here");
+
+    let num_of_transactions = match matches.value_of("first_n") {
+        None => NumOfTransactions::All,
+        Some(raw_input) => match raw_input.parse::<u64>() {
+            Err(_) => NumOfTransactions::All,
+            Ok(n) => {
+                if n > 0 {
+                    NumOfTransactions::Some(n)
+                } else {
+                    NumOfTransactions::All
+                }
+            }
+        },
+    };
 
     // csv reader
 
@@ -45,6 +84,8 @@ fn main() {
             std::process::exit(1);
         }
     };
+
+    let mut transactions = vec![];
 
     for result in reader.records() {
         let record = result.unwrap();
@@ -67,6 +108,21 @@ fn main() {
             credit
         };
 
+        transactions.push(Transaction {
+            date,
+            description: description.to_string(),
+            amount: amount.to_string(),
+        });
+    }
+
+    let transactions = transactions;
+
+    let range = match num_of_transactions {
+        NumOfTransactions::All => 0..,
+        NumOfTransactions::Some(n) => (transactions.len() - (n as usize))..,
+    };
+
+    for transaction in transactions.get(range).unwrap() {
         // ledger-cli journal format: https://www.ledger-cli.org/3.0/doc/ledger3.html#Journal-Format
 
         println!(
@@ -75,11 +131,10 @@ fn main() {
     {:76}{} CAD
     ???
 "#,
-            date.format("%Y-%m-%d"),
-            description,
+            transaction.date.format("%Y-%m-%d"),
+            transaction.description,
             account_name,
-            amount
+            transaction.amount
         );
-
     }
 }
