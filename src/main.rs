@@ -22,6 +22,11 @@ struct Transaction {
     amount: String,
 }
 
+enum Filter {
+    FromDate(NaiveDate),
+    None,
+}
+
 // app
 
 fn main() {
@@ -35,6 +40,13 @@ fn main() {
             Arg::with_name("INPUT")
                 .help("Sets the input CSV file to use")
                 .required(true),
+        )
+        .arg(
+            Arg::with_name("start_date")
+                .short("d")
+                .long("start_date")
+                .help("Show only transactions from start_date")
+                .takes_value(true),
         )
         .arg(
             Arg::with_name("account_name")
@@ -57,6 +69,13 @@ fn main() {
     let account_name = matches
         .value_of("account_name")
         .unwrap_or("account name here");
+
+    let maybe_start_date = matches
+        .value_of("start_date")
+        .map(|start_date| {
+            Filter::FromDate(NaiveDate::parse_from_str(&start_date, "%b %d, %Y").unwrap())
+        })
+        .unwrap_or(Filter::None);
 
     let num_of_transactions = match matches.value_of("first_n") {
         None => NumOfTransactions::All,
@@ -101,6 +120,15 @@ fn main() {
         // formatting
 
         let date = NaiveDate::parse_from_str(&date, "%m/%d/%Y").unwrap();
+
+        match maybe_start_date {
+            Filter::None => {}
+            Filter::FromDate(start_date) => {
+                if start_date > date {
+                    continue;
+                }
+            }
+        }
 
         let amount = if debit.len() > 0 {
             format!("-{}", debit)
