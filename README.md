@@ -32,6 +32,16 @@ ARGS:
 
 3. Paste transactions into your ledger-cli file.
 
+Install
+=======
+
+## From source
+
+- Install rust. (e.g. set via https://www.rustup.rs/)
+- `git clone git@github.com:dashed/td-transactions-to-ledger.git`
+- `cargo build --release`
+- `cp target/release/td-transactions-to-ledger /usr/local/bin` (or similar)
+
 License
 =======
 
