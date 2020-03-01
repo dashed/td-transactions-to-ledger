@@ -52,7 +52,14 @@ fn main() {
             Arg::with_name("account_name")
                 .short("a")
                 .long("account")
-                .help("Sets account for each transaction")
+                .help("Sets account for each transaction (credit)")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("debit_name")
+                .short("debit")
+                .long("debit")
+                .help("Sets debit account for each transaction (debit)")
                 .takes_value(true),
         )
         .arg(
@@ -69,6 +76,10 @@ fn main() {
     let account_name = matches
         .value_of("account_name")
         .unwrap_or("account name here");
+
+    let debit_name = matches
+        .value_of("debit_name")
+        .unwrap_or("expenses");
 
     let maybe_start_date = matches
         .value_of("start_date")
@@ -157,12 +168,13 @@ fn main() {
             r#"
 {} * {}
     {:76}{} CAD
-    ???
+    {}
 "#,
             transaction.date.format("%Y-%m-%d"),
             transaction.description,
             account_name,
-            transaction.amount
+            transaction.amount,
+            debit_name
         );
     }
 }
