@@ -43,7 +43,7 @@ fn main() {
         )
         .arg(
             Arg::with_name("start_date")
-                .short("d")
+                .short("s")
                 .long("start_date")
                 .help("Show only transactions from start_date")
                 .takes_value(true),
@@ -57,7 +57,7 @@ fn main() {
         )
         .arg(
             Arg::with_name("debit_name")
-                .short("debit")
+                .short("d")
                 .long("debit")
                 .help("Sets debit account for each transaction (debit)")
                 .takes_value(true),
