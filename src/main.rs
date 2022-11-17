@@ -33,7 +33,7 @@ fn main() {
     // cli args
 
     let matches = App::new("td-transactions-to-ledger")
-        .version("0.1.0")
+        .version("0.2.0")
         .author("Alberto Leal <mailforalberto@gmail.com>")
         .about("Convert TD Bank transactions to ledger compatible transactions")
         .arg(
