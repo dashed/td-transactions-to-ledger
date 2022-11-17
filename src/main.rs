@@ -6,8 +6,8 @@ extern crate csv;
 
 // 3rd-party imports
 
-use clap::{App, Arg};
 use chrono::NaiveDate;
+use clap::{App, Arg};
 
 // types
 
@@ -77,9 +77,7 @@ fn main() {
         .value_of("account_name")
         .unwrap_or("account name here");
 
-    let debit_name = matches
-        .value_of("debit_name")
-        .unwrap_or("expenses");
+    let debit_name = matches.value_of("debit_name").unwrap_or("expenses");
 
     let maybe_start_date = matches
         .value_of("start_date")
@@ -153,6 +151,10 @@ fn main() {
             amount: amount.to_string(),
         });
     }
+
+    let mut transactions = transactions;
+
+    transactions.sort_by(|a, b| a.date.partial_cmp(&b.date).unwrap());
 
     let transactions = transactions;
 
