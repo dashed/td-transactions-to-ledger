@@ -29,6 +29,34 @@ enum Filter {
 
 // app
 
+// Helper function to parse dates in multiple formats
+fn parse_transaction_date(date_str: &str) -> NaiveDate {
+    // Try YYYY-MM-DD format first (new TD format)
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%Y-%m-%d") {
+        return date;
+    }
+
+    // Try MM/DD/YYYY format (old TD format)
+    if let Ok(date) = NaiveDate::parse_from_str(date_str, "%m/%d/%Y") {
+        return date;
+    }
+
+    // If both fail, panic with a helpful message
+    panic!(
+        "Unable to parse date '{}'. Expected format: YYYY-MM-DD or MM/DD/YYYY",
+        date_str
+    );
+}
+
+// Helper function to format transaction amount
+fn format_transaction_amount(debit: &str, credit: &str) -> String {
+    if debit.len() > 0 {
+        format!("-{}", debit)
+    } else {
+        credit.to_string()
+    }
+}
+
 fn main() {
     // cli args
 
@@ -128,7 +156,7 @@ fn main() {
 
         // formatting
 
-        let date = NaiveDate::parse_from_str(&date, "%m/%d/%Y").unwrap();
+        let date = parse_transaction_date(&date);
 
         match maybe_start_date {
             Filter::None => {}
@@ -139,11 +167,7 @@ fn main() {
             }
         }
 
-        let amount = if debit.len() > 0 {
-            format!("-{}", debit)
-        } else {
-            credit
-        };
+        let amount = format_transaction_amount(&debit, &credit);
 
         transactions.push(Transaction {
             date,
@@ -178,5 +202,89 @@ fn main() {
             transaction.amount,
             debit_name
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_date_yyyy_mm_dd_format() {
+        let date = parse_transaction_date("2025-09-29");
+        assert_eq!(date.format("%Y-%m-%d").to_string(), "2025-09-29");
+    }
+
+    #[test]
+    fn test_parse_date_mm_dd_yyyy_format() {
+        let date = parse_transaction_date("09/29/2025");
+        assert_eq!(date.format("%Y-%m-%d").to_string(), "2025-09-29");
+    }
+
+    #[test]
+    fn test_parse_date_old_format() {
+        let date = parse_transaction_date("12/11/2022");
+        assert_eq!(date.format("%Y-%m-%d").to_string(), "2022-12-11");
+    }
+
+    #[test]
+    fn test_parse_date_new_format_leap_year() {
+        let date = parse_transaction_date("2024-02-29");
+        assert_eq!(date.format("%Y-%m-%d").to_string(), "2024-02-29");
+    }
+
+    #[test]
+    #[should_panic(expected = "Unable to parse date")]
+    fn test_parse_date_invalid_format() {
+        parse_transaction_date("2025/09/29");
+    }
+
+    #[test]
+    #[should_panic(expected = "Unable to parse date")]
+    fn test_parse_date_invalid_date() {
+        parse_transaction_date("2025-13-45");
+    }
+
+    #[test]
+    #[should_panic(expected = "Unable to parse date")]
+    fn test_parse_date_empty_string() {
+        parse_transaction_date("");
+    }
+
+    #[test]
+    fn test_format_amount_debit() {
+        let amount = format_transaction_amount("1100", "");
+        assert_eq!(amount, "-1100");
+    }
+
+    #[test]
+    fn test_format_amount_credit() {
+        let amount = format_transaction_amount("", "5000");
+        assert_eq!(amount, "5000");
+    }
+
+    #[test]
+    fn test_format_amount_decimal_debit() {
+        let amount = format_transaction_amount("30.95", "");
+        assert_eq!(amount, "-30.95");
+    }
+
+    #[test]
+    fn test_format_amount_decimal_credit() {
+        let amount = format_transaction_amount("", "8.5");
+        assert_eq!(amount, "8.5");
+    }
+
+    #[test]
+    fn test_format_amount_both_empty() {
+        let amount = format_transaction_amount("", "");
+        assert_eq!(amount, "");
+    }
+
+    #[test]
+    fn test_format_amount_debit_takes_precedence() {
+        // If both are provided, debit should take precedence
+        let amount = format_transaction_amount("100", "200");
+        assert_eq!(amount, "-100");
     }
 }
